@@ -4,7 +4,7 @@
 
 - [目录概述](#目录概述)
 - [资源列表](#资源列表)
-- [资源使用说明](#资源使用说明)
+- [CSS 模块化架构](#css-模块化架构)
 - [添加新资源](#添加新资源)
 
 ## 目录概述
@@ -15,59 +15,102 @@
 
 目录包含以下主要资源：
 
-- **style.css**: 网站的主样式表文件
-  - 定义了网站的整体样式、布局和主题
-  - 包含响应式设计和动画效果的实现
+- **style.css**: 样式入口文件
+  - 通过 `@import` 聚合所有模块化 CSS
+  - 构建时由 esbuild 合并压缩为单文件
+
+- **styles/**: CSS 模块目录（详见下方）
 
 - **menav.svg**: 网站图标和项目logo
   - 显示在浏览器标签页、书签和收藏夹中
-  - 作为网站的标识符
   - SVG格式，包含黑色字母"M"和蓝色向上箭头设计
 
-- **preview_light.png**: 明亮主题预览图
-  - 用于README文档中展示网站明亮主题效果
-  - 作为项目展示素材
+- **preview_light.png / preview_dark.png**: 主题预览图
+  - 用于 README 文档展示
 
-- **preview_dark.png**: 暗黑主题预览图
-  - 用于README文档中展示网站暗黑主题效果
-  - 作为项目展示素材
+## CSS 模块化架构
 
-## 资源使用说明
+样式采用模块化组织，构建时自动合并：
 
-### 样式表
+```
+assets/
+├── style.css              # 入口文件（@import 聚合）
+└── styles/
+    ├── tokens.css         # 尺寸、间距、圆角、动效和派生 token
+    ├── themes.css         # 深色默认主题与 Notion 风格浅色主题
+    ├── base.css           # 基础层聚合入口
+    ├── layout.css         # 布局层聚合入口
+    ├── components.css     # 组件层聚合入口
+    ├── utilities.css      # 工具/兜底层聚合入口
+    ├── _variables.css     # 旧变量入口兼容层（转发 tokens/themes）
+    ├── _base.css          # 全局重置、滚动条
+    ├── _animations.css    # @keyframes 动画
+    ├── _layout.css        # 页面容器布局
+    ├── _sidebar.css       # 侧边栏组件
+    ├── _search.css        # 搜索框组件
+    ├── _cards.css         # 卡片组件（站点卡片、tooltip）
+    ├── _modal.css         # 模态框、表单
+    ├── _content.css       # Markdown 内容页
+    ├── _dashboard.css     # 仪表盘（时钟/Todo）
+    ├── _category.css      # 分类层级、折叠和嵌套网格
+    ├── _github-heatmap.css # GitHub 热力图
+    ├── _responsive.css    # 全局响应式规则
+    └── _main.css          # 剩余兜底样式
+```
 
-`style.css` 文件包含网站的所有样式定义，遵循以下组织结构：
+### 模块说明
 
-- 基础样式 - 通用元素样式定义
-- 布局样式 - 页面结构和布局定义
-- 组件样式 - 特定UI组件的样式定义
-- 响应式样式 - 适配不同设备屏幕的媒体查询
-- 主题样式 - 明亮和暗黑主题的颜色方案
+| 模块 | 职责 |
+|------|------|
+| `tokens.css` | 尺寸、字体、间距、圆角、动效、半透明面与派生交互 token |
+| `themes.css` | 默认深色主题、Notion 风格浅色主题、主题色阶覆盖 |
+| `base.css` | 基础层聚合入口，导入 `_base.css` 与 `_animations.css` |
+| `layout.css` | 布局层聚合入口，导入 `_layout.css` |
+| `components.css` | 组件层聚合入口，导入侧边栏、搜索、卡片、表单、内容、仪表盘样式 |
+| `utilities.css` | 工具/兜底层聚合入口，导入 `_category.css`、`_github-heatmap.css`、`_responsive.css` 和 `_main.css` |
+| `_variables.css` | 旧变量入口兼容层，新代码不要继续扩展该文件 |
+| `_base.css` | 全局重置、滚动条、遮罩层、主题切换按钮 |
+| `_animations.css` | 所有 `@keyframes` 定义 |
+| `_layout.css` | 页面容器、欢迎区域、模板布局 |
+| `_sidebar.css` | 侧边栏、导航项、折叠状态、子菜单 |
+| `_search.css` | 搜索框、引擎下拉、快捷键提示 |
+| `_cards.css` | 站点卡片、网格布局、tooltip、编辑按钮 |
+| `_modal.css` | 模态框、表单控件、按钮样式 |
+| `_content.css` | Markdown 渲染（标题、代码块、表格等） |
+| `_dashboard.css` | 仪表盘网格、时钟卡片、Todo 列表 |
+| `_category.css` | 分类层级、折叠状态和嵌套站点网格 |
+| `_github-heatmap.css` | projects 页 GitHub 热力图和第三方日历覆盖 |
+| `_responsive.css` | 全局移动端、窄屏和桌面宽度响应式规则 |
+| `_main.css` | 剩余兜底样式，包含搜索结果页、页面过渡和少量侧边栏遗留规则 |
 
-样式表支持主题切换功能，通过CSS变量实现不同主题下的颜色变换。
+### 构建流程
 
-### 图标与图片
+构建时 esbuild 会：
+1. 解析 `style.css` 中的 `@import` 语句
+2. 合并所有模块为单文件
+3. 压缩输出到 `dist/style.css`
 
-- 网站图标 (`menav.svg`) 自动应用于生成的网站
-- 预览图片用于项目文档和宣传
+> **开发提示**：修改 CSS 后运行 `npm run build` 或 `npm run dev` 查看效果。
 
 ## 添加新资源
 
-向资源目录添加新文件时，请遵循以下指南：
+### 文件命名规范
 
-1. **文件命名**:
-   - 使用小写字母和连字符 (`-`)
-   - 避免使用空格和特殊字符
-   - 名称应清晰表达文件用途
+- 使用小写字母和连字符 (`-`)
+- 避免使用空格和特殊字符
+- 名称应清晰表达文件用途
 
-2. **图片优化**:
-   - 压缩图片以减小文件大小
-   - 使用适合web的格式 (PNG, JPG, WebP)
-   - 考虑添加合适的分辨率版本
+### CSS 扩展指南
 
-3. **样式扩展**:
-   - 新的样式应该添加到 `style.css` 的合适部分
-   - 遵循现有的命名规范和组织结构
-   - 确保添加响应式设计支持
+1. **找到合适的模块**：根据功能选择对应的 `_*.css` 文件
+2. **遵循命名规范**：使用 BEM 风格或现有选择器模式
+3. **添加响应式支持**：在同一模块内添加 `@media` 查询
+4. **Token 优先**：颜色、间距、圆角、阴影必须优先使用 `tokens.css` / `themes.css` 中定义的变量
 
-添加新资源后，构建系统会自动将这些文件复制到生成的网站中。 
+### 图片优化
+
+- 压缩图片以减小文件大小
+- 使用 PNG、JPG、WebP 等 web 友好格式
+- 考虑添加合适的分辨率版本
+
+添加新资源后，构建系统会自动将这些文件复制到生成的网站中。

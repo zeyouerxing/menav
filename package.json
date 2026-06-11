@@ -1,20 +1,39 @@
 {
   "name": "menav",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "A personal navigation website",
-  "main": "src/generator.js",
+  "main": "dist-node/index.cjs",
+  "exports": {
+    ".": "./dist-node/index.cjs"
+  },
+  "engines": {
+    "node": ">=22.12"
+  },
   "homepage": "https://rbetree.github.io/menav",
   "scripts": {
-    "generate": "node src/generator.js",
-    "dev": "node src/generator.js && serve dist -l 5173",
-    "clean": "node ./scripts/clean.js",
-    "build": "npm run clean && npm run generate",
-    "import-bookmarks": "node src/bookmark-processor.js",
-    "test": "node --test test/*.js",
-    "lint": "node --check \"src/generator.js\" && node --check \"src/bookmark-processor.js\" && node --check \"src/script.js\"",
-    "format": "prettier --write \"src/**/*.js\" \"scripts/**/*.js\" \"test/**/*.js\" \".github/**/*.yml\" \"*.{md,json}\" \"config/**/*.md\" \"config/**/*.yml\"",
-    "format:check": "prettier --check \"src/**/*.js\" \"scripts/**/*.js\" \"test/**/*.js\" \".github/**/*.yml\" \"*.{md,json}\" \"config/**/*.md\" \"config/**/*.yml\"",
-    "check": "npm run lint && npm test && npm run build"
+    "generate": "node -r ./scripts/register-ts.cjs ./scripts/generate.ts",
+    "dev": "node -r ./scripts/register-ts.cjs ./scripts/dev.ts",
+    "dev:offline": "node -r ./scripts/register-ts.cjs ./scripts/dev-offline.ts",
+    "init-config": "node -r ./scripts/register-ts.cjs ./scripts/init-config.ts",
+    "clean": "node -r ./scripts/register-ts.cjs ./scripts/clean.ts",
+    "build:lib": "node -r ./scripts/register-ts.cjs ./scripts/build-lib.ts",
+    "build": "node -r ./scripts/register-ts.cjs ./scripts/build.ts",
+    "sync": "node -r ./scripts/register-ts.cjs ./scripts/sync.ts",
+    "sync-articles": "node -r ./scripts/register-ts.cjs ./scripts/sync-articles.ts",
+    "sync-projects": "node -r ./scripts/register-ts.cjs ./scripts/sync-projects.ts",
+    "import-bookmarks": "node -r ./scripts/register-ts.cjs src/bookmark-processor.ts",
+    "test": "node -r ./scripts/register-ts.cjs ./scripts/test.ts",
+    "lint": "node -r ./scripts/register-ts.cjs ./scripts/lint.ts",
+    "format": "node -r ./scripts/register-ts.cjs ./scripts/format.ts --write",
+    "format:check": "node -r ./scripts/register-ts.cjs ./scripts/format.ts --check",
+    "format:check:changed": "node -r ./scripts/register-ts.cjs ./scripts/format-check-changed.ts",
+    "check:fast": "node -r ./scripts/register-ts.cjs ./scripts/check.ts && npm run build:lib && node -e \"require('.')\" && tsc --noEmit",
+    "check:browser": "npm run build && npm run test:browser",
+    "check": "npm run check:fast",
+    "prepare": "husky",
+    "dev:astro": "node -r ./scripts/register-ts.cjs ./scripts/dev-astro.ts",
+    "test:browser": "node -r ./scripts/register-ts.cjs ./scripts/test-browser.ts",
+    "prepack": "npm run build:lib"
   },
   "keywords": [
     "navigation",
@@ -24,18 +43,29 @@
   "author": "Your Name",
   "license": "AGPL-3.0-only",
   "dependencies": {
-    "js-yaml": "^4.1.1",
-    "handlebars": "^4.7.8",
-    "ansi-regex": "^6.0.1",
-    "ansi-styles": "^6.2.1",
-    "supports-color": "^9.4.0",
-    "has-flag": "^5.0.1",
-    "color-convert": "^2.0.1",
-    "color-name": "^2.0.0",
-    "mime-db": "^1.52.0"
+    "js-yaml": "^4.2.0",
+    "markdown-it": "^14.2.0",
+    "rss-parser": "^3.13.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "prettier": "^3.4.2",
-    "serve": "^14.2.5"
+    "@astrojs/check": "^0.9.9",
+    "@types/node": "^25.9.2",
+    "astro": "^6.4.4",
+    "esbuild": "^0.28.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
+    "playwright": "^1.60.0",
+    "prettier": "^3.8.3",
+    "prettier-plugin-astro": "^0.14.1",
+    "serve": "^14.2.6"
+  },
+  "overrides": {
+    "brace-expansion": "1.1.12"
+  },
+  "lint-staged": {
+    "**/*.js": "node ./node_modules/prettier/bin/prettier.cjs --write --ignore-unknown",
+    "**/*.{astro,yml,yaml,md,css}": "node ./node_modules/prettier/bin/prettier.cjs --write --ignore-unknown",
+    "**/!(package-lock).json": "node ./node_modules/prettier/bin/prettier.cjs --write --ignore-unknown"
   }
 }
